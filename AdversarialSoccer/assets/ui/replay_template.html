@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>FIFA World Cup 2026 - Colombia Tactical Simulation</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #1b5630 0, #102415 55%);
+      color: #f4f7ef;
+      font-family: Arial, Helvetica, sans-serif;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    main {
+      width: min(1180px, calc(100vw - 48px));
+      max-width: calc(100vw - 48px);
+      flex: 1;
+      min-height: 0;
+      padding: 24px;
+      background: linear-gradient(180deg, #1b4328 0%, #132b1b 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 22px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #stage {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: #0e2114;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    #pitch {
+      position: relative;
+      margin: 0 auto;
+      background-color: #246b35;
+      border: 4px solid #f4f7ef;
+      overflow: hidden;
+      flex: 0 0 auto;
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.20);
+    }
+
+    #gridOverlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.22) 1px, transparent 1px);
+      transition: opacity 160ms ease;
+      z-index: 2;
+    }
+
+    #gridOverlay.visible {
+      opacity: 0.18;
+    }
+
+    #axisLabels {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      z-index: 3;
+    }
+
+    #axisLabels.visible {
+      opacity: 1;
+    }
+
+    .axis-label {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      font-weight: 800;
+      color: #ffe66d;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+      line-height: 1;
+    }
+
+    .midline {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #f4f7ef;
+      opacity: 0.85;
+    }
+
+    .center-circle {
+      position: absolute;
+      border: 3px solid #f4f7ef;
+      border-radius: 50%;
+      opacity: 0.85;
+    }
+
+    .penalty-box {
+      position: absolute;
+      box-sizing: border-box;
+      border: 3px solid rgba(244, 247, 239, 0.9);
+    }
+
+    .penalty-box.left {
+      border-left: none;
+    }
+
+    .penalty-box.right {
+      border-right: none;
+    }
+
+    svg.field-markings {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 4;
+    }
+
+    .cell {
+      position: absolute;
+      box-sizing: border-box;
+    }
+
+    svg.action-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 6;
+    }
+
+    .shot-trail {
+      fill: none;
+      stroke-linecap: round;
+      opacity: 0.85;
+    }
+
+    .turnover-pulse {
+      position: absolute;
+      border: 4px solid #7cf7ff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 7;
+      box-shadow: 0 0 18px rgba(124, 247, 255, 0.95);
+      animation: turnoverPulse 1100ms ease-out forwards;
+    }
+
+    .turnover-ring {
+      position: absolute;
+      border: 3px dashed rgba(255, 255, 255, 0.95);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 7;
+      animation: turnoverRing 1100ms ease-out forwards;
+    }
+
+    @keyframes turnoverPulse {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 1;
+      }
+
+      100% {
+        width: 88px;
+        height: 88px;
+        opacity: 0;
+      }
+    }
+
+    @keyframes turnoverRing {
+      0% {
+        width: 18px;
+        height: 18px;
+        opacity: 0.95;
+      }
+
+      100% {
+        width: 110px;
+        height: 110px;
+        opacity: 0;
+      }
+    }
+
+    .event-banner {
+      position: absolute;
+      left: 50%;
+      top: 42%;
+      transform: translate(-50%, -50%);
+      z-index: 20;
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-weight: 900;
+      font-size: clamp(20px, 4.5vw, 34px);
+      letter-spacing: 0.1em;
+      text-align: center;
+      pointer-events: none;
+      animation: bannerPop 1200ms ease-out forwards;
+      white-space: nowrap;
+    }
+
+    .turnover-banner {
+      background: rgba(124, 247, 255, 0.96);
+      color: #08212f;
+      box-shadow: 0 0 36px rgba(124, 247, 255, 0.95);
+    }
+
+    .goal-banner {
+      background: linear-gradient(180deg, #ffe66d 0%, #ffd447 100%);
+      color: #111;
+      box-shadow: 0 0 48px rgba(255, 212, 71, 0.95);
+      font-size: clamp(24px, 5.5vw, 42px);
+    }
+
+    @keyframes bannerPop {
+      0% {
+        transform: translate(-50%, -50%) scale(0.35);
+        opacity: 0;
+      }
+
+      18% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 1;
+      }
+
+      75% {
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.92;
+      }
+    }
+
+    #pitch.pitch-flash-turnover {
+      box-shadow:
+        inset 0 0 0 7px #7cf7ff,
+        inset 0 0 90px rgba(124, 247, 255, 0.42),
+        0 0 30px rgba(124, 247, 255, 0.35);
+    }
+
+    #pitch.pitch-flash-goal {
+      box-shadow:
+        inset 0 0 0 9px #ffd447,
+        inset 0 0 110px rgba(255, 212, 71, 0.5),
+        0 0 40px rgba(255, 212, 71, 0.45);
+    }
+
+    .goal-mouth-flash {
+      animation: goalMouthFlash 1200ms ease-out infinite;
+      z-index: 5;
+    }
+
+    @keyframes goalMouthFlash {
+      0%,
+      100% {
+        filter: brightness(1);
+        box-shadow: inset 0 0 0 0 rgba(255, 230, 109, 0);
+      }
+
+      50% {
+        filter: brightness(1.35);
+        box-shadow: inset 0 0 18px rgba(255, 230, 109, 0.95);
+      }
+    }
+
+    #ball.ball-alert {
+      box-shadow:
+        0 0 0 5px #fff,
+        0 0 22px 8px rgba(124, 247, 255, 0.95);
+      animation: ballAlert 900ms ease-out 2;
+    }
+
+    @keyframes ballAlert {
+      0%,
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      50% {
+        transform: translate(-50%, -50%) scale(1.35);
+      }
+    }
+
+    @keyframes drawShotTrail {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .player.moving {
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+    }
+
+    .goal {
+      background: rgba(232, 236, 239, 0.85);
+      background-image:
+        linear-gradient(#9aa7b0 1px, transparent 1px),
+        linear-gradient(90deg, #9aa7b0 1px, transparent 1px);
+      background-size: 9px 9px;
+    }
+
+    .wall {
+      background: #4a3b2a;
+      border: 2px solid #2c2319;
+    }
+
+    .player {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      box-sizing: border-box;
+      transform: translate(-50%, -50%);
+      transition: left 460ms cubic-bezier(.2, .75, .2, 1), top 460ms cubic-bezier(.2, .75, .2, 1);
+      z-index: 8;
+    }
+
+    .colombia {
+      background: #ffd447;
+      color: #111;
+      border: 4px solid #2456a6;
+    }
+
+    .rival {
+      background: #d62828;
+      color: white;
+      border: 4px solid #7a1212;
+    }
+
+    .has-ball {
+      outline: 4px solid white;
+      outline-offset: 3px;
+    }
+
+    #ball {
+      position: absolute;
+      background: #f7f7f7;
+      border: 3px solid #222;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-sizing: border-box;
+      transition: left 460ms cubic-bezier(.2, .75, .2, 1), top 460ms cubic-bezier(.2, .75, .2, 1);
+      z-index: 11;
+    }
+
+    #controls {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      margin-top: 14px;
+      flex: 0 0 auto;
+      padding: 12px 16px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.07);
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .control-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
+    .timeline-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1 1 240px;
+      max-width: min(560px, 100%);
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #ffd447;
+      border: 0;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    label.toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.10);
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      min-width: 140px;
+      width: auto;
+    }
+
+    #frameLabel {
+      flex: 0 0 auto;
+      min-width: 52px;
+      text-align: right;
+      font-weight: 800;
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <div id="stage">
+      <div id="pitch">
+        <div id="gridOverlay"></div>
+        <div id="axisLabels"></div>
+      </div>
+    </div>
+    <div id="controls">
+      <div class="control-bar">
+        <button id="play">Play</button>
+        <button id="restart">Restart</button>
+        <button id="prev">Previous</button>
+        <button id="next">Next</button>
+        <label class="toggle"><input id="gridToggle" type="checkbox"> Grid</label>
+      </div>
+      <div class="timeline-bar">
+        <input id="scrubber" type="range" min="0" value="0">
+        <span id="frameLabel"></span>
+      </div>
+    </div>
+  </main>
+  <script>
+    const data = __DATA__;
+    const pitch = document.getElementById("pitch");
+    const play = document.getElementById("play");
+    const restart = document.getElementById("restart");
+    const prev = document.getElementById("prev");
+    const next = document.getElementById("next");
+    const gridToggle = document.getElementById("gridToggle");
+    const gridOverlay = document.getElementById("gridOverlay");
+    const axisLabels = document.getElementById("axisLabels");
+    const scrubber = document.getElementById("scrubber");
+    const frameLabel = document.getElementById("frameLabel");
+    const controls = document.getElementById("controls");
+
+    function computeCellSize() {
+      const mainWidth = Math.min(1180, window.innerWidth - 48);
+      const mainPadding = 48;
+      const stagePadding = 32;
+      const controlsHeight = controls.offsetHeight + 14;
+      const availableWidth = mainWidth - mainPadding - stagePadding;
+      const availableHeight = window.innerHeight - 48 - mainPadding - controlsHeight - stagePadding;
+      const maxCell = data.cellSize;
+      const cellFromWidth = availableWidth / data.width;
+      const cellFromHeight = availableHeight / data.height;
+      return Math.max(6, Math.min(maxCell, Math.floor(Math.min(cellFromWidth, cellFromHeight))));
+    }
+
+    let cs = computeCellSize();
+    let widthPx = data.width * cs;
+    let heightPx = data.height * cs;
+    const moveTransition = "left 460ms cubic-bezier(.2,.75,.2,1), top 460ms cubic-bezier(.2,.75,.2,1)";
+    let frameIndex = 0;
+    let timer = null;
+
+    function animDurationMs() {
+      return Math.min(Math.round(data.frameDelayMs * 0.85), 680);
+    }
+
+    pitch.style.width = `${widthPx}px`;
+    pitch.style.height = `${heightPx}px`;
+    pitch.style.background = `repeating-linear-gradient(90deg, #246b35 0, #246b35 ${cs}px, #2f7d3f ${cs}px, #2f7d3f ${cs * 2}px)`;
+    gridOverlay.style.backgroundSize = `${cs}px ${cs}px`;
+    scrubber.max = Math.max(0, data.frames.length - 1);
+
+    function toScreen(pos) {
+      const [x, y] = pos;
+      return [(x + 0.5) * cs, (data.height - y - 0.5) * cs];
+    }
+    function addCell(pos, className) {
+      const [x, y] = pos;
+      const el = document.createElement("div");
+      el.className = `cell ${className}`;
+      el.style.left = `${x * cs}px`;
+      el.style.top = `${(data.height - y - 1) * cs}px`;
+      el.style.width = `${cs}px`;
+      el.style.height = `${cs}px`;
+      pitch.appendChild(el);
+    }
+    function goalRowBounds(cells) {
+      const ys = cells.map(pos => pos[1]);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      return { minY, maxY, height: maxY - minY + 1 };
+    }
+
+    function addPenaltyBox(side, goalCells) {
+      const { minY, maxY } = goalRowBounds(goalCells);
+      const boxMinY = minY - 1;
+      const boxMaxY = maxY + 1;
+      const boxRows = boxMaxY - boxMinY + 1;
+      const boxW = cs * 3;
+      const boxH = cs * boxRows;
+      const box = document.createElement("div");
+      box.className = `penalty-box penalty-box-${side}`;
+      box.style.width = `${boxW}px`;
+      box.style.height = `${boxH}px`;
+      box.style.top = `${(data.height - boxMaxY - 1) * cs}px`;
+      box.style.left = side === "left" ? "0px" : `${widthPx - boxW}px`;
+      pitch.appendChild(box);
+    }
+    data.ownGoal.forEach(pos => addCell(pos, "goal"));
+    data.rivalGoal.forEach(pos => addCell(pos, "goal"));
+    data.walls.forEach(pos => addCell(pos, "wall"));
+    addPenaltyBox("left", data.ownGoal);
+    addPenaltyBox("right", data.rivalGoal);
+
+    function addCornerArcs() {
+      const radius = cs * 0.85;
+      const stroke = "rgba(244, 247, 239, 0.9)";
+      const strokeWidth = 3;
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add("field-markings");
+      svg.setAttribute("viewBox", `0 0 ${widthPx} ${heightPx}`);
+      const bl = { cx: cs, cy: heightPx - cs };
+      const br = { cx: widthPx - cs, cy: heightPx - cs };
+      const tl = { cx: cs, cy: cs };
+      const tr = { cx: widthPx - cs, cy: cs };
+      const arcs = [
+        `M ${bl.cx},${bl.cy - radius} A ${radius},${radius} 0 0 1 ${bl.cx + radius},${bl.cy}`,
+        `M ${br.cx - radius},${br.cy} A ${radius},${radius} 0 0 1 ${br.cx},${br.cy - radius}`,
+        `M ${tl.cx},${tl.cy + radius} A ${radius},${radius} 0 0 0 ${tl.cx + radius},${tl.cy}`,
+        `M ${tr.cx - radius},${tr.cy} A ${radius},${radius} 0 0 0 ${tr.cx},${tr.cy + radius}`,
+      ];
+      svg.innerHTML = arcs.map(
+        d => `<path d="${d}" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round"/>`
+      ).join("");
+      pitch.appendChild(svg);
+    }
+
+    addCornerArcs();
+
+    const midline = document.createElement("div");
+    midline.className = "midline";
+    midline.style.left = `${widthPx / 2}px`;
+    pitch.appendChild(midline);
+
+    const circle = document.createElement("div");
+    circle.className = "center-circle";
+    circle.style.width = `${cs * 2.8}px`;
+    circle.style.height = `${cs * 2.8}px`;
+    circle.style.left = `${widthPx / 2 - cs * 1.4}px`;
+    circle.style.top = `${heightPx / 2 - cs * 1.4}px`;
+    pitch.appendChild(circle);
+
+    function addAxisLabel(x, y, text) {
+      const el = document.createElement("span");
+      el.className = "axis-label";
+      el.textContent = text;
+      el.style.left = `${x * cs}px`;
+      el.style.top = `${(data.height - y - 1) * cs}px`;
+      el.style.width = `${cs}px`;
+      el.style.height = `${cs}px`;
+      el.style.fontSize = `${Math.max(7, Math.round(cs * 0.38))}px`;
+      axisLabels.appendChild(el);
+    }
+
+    function buildAxisLabels() {
+      for (let x = 0; x < data.width; x++) {
+        addAxisLabel(x, data.height - 1, String(x));
+        addAxisLabel(x, 0, String(x));
+      }
+      for (let y = 1; y < data.height - 1; y++) {
+        addAxisLabel(0, y, String(y));
+        addAxisLabel(data.width - 1, y, String(y));
+      }
+    }
+
+    buildAxisLabels();
+
+    function setGridVisible(visible) {
+      gridOverlay.classList.toggle("visible", visible);
+      axisLabels.classList.toggle("visible", visible);
+    }
+
+    function clearOverlays() {
+      document.querySelectorAll(".action-layer,.turnover-pulse,.turnover-ring,.event-banner").forEach(el => el.remove());
+      pitch.classList.remove("pitch-flash-turnover", "pitch-flash-goal");
+      document.querySelectorAll(".goal-mouth-flash").forEach(el => el.classList.remove("goal-mouth-flash"));
+      const ball = document.getElementById("ball");
+      if (ball) ball.classList.remove("ball-alert");
+    }
+
+    function frameDelay(index) {
+      const frame = data.frames[index];
+      return frame?.holdMs ?? data.frameDelayMs;
+    }
+
+    function teamColor(team) {
+      return team === "Colombia" ? "#ffe66d" : "#ff8a8a";
+    }
+
+    function drawFrame(index) {
+      frameIndex = Math.max(0, Math.min(index, data.frames.length - 1));
+      const frame = data.frames[frameIndex];
+      clearOverlays();
+
+      const moveLookup = buildMoveLookup(frame.events);
+      frame.colombia.forEach((pos, idx) => {
+        const moved = moveLookup.has(`Colombia:${idx}`);
+        addPlayer(`colombia-${idx}`, pos, idx + 1, "colombia", frame.possession === "Colombia" && idx === ownerIndex(frame, "Colombia"), moved);
+      });
+      frame.rival.forEach((pos, idx) => {
+        const moved = moveLookup.has(`Rival:${idx}`);
+        addPlayer(`rival-${idx}`, pos, idx + 1, "rival", frame.possession === "Rival" && idx === ownerIndex(frame, "Rival"), moved);
+      });
+
+      const shootEvent = frame.events?.find(event => event.type === "Shoot");
+      if (shootEvent) {
+        animateBallShot(shootEvent);
+        addShotTrail(shootEvent);
+      } else {
+        addBall(frame.ball);
+      }
+
+      frame.events?.forEach(event => {
+        if (event.type === "Turnover") {
+          addTurnoverEffect(event);
+        }
+        if (event.type === "Goal") {
+          addGoalEffect(event);
+        }
+      });
+
+      scrubber.value = frameIndex;
+      frameLabel.textContent = `${frameIndex + 1}/${data.frames.length}`;
+    }
+
+    function buildMoveLookup(events) {
+      const moved = new Set();
+      if (!events) return moved;
+      events.forEach(event => {
+        if (event.type !== "Move" || event.player == null) return;
+        moved.add(`${event.team}:${event.player}`);
+      });
+      return moved;
+    }
+
+    function addShotTrail(event) {
+      const [x1, y1] = toScreen(event.from);
+      const [x2, y2] = toScreen(event.to);
+      const color = teamColor(event.team);
+      const duration = animDurationMs();
+      const length = Math.hypot(x2 - x1, y2 - y1);
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add("action-layer", "dynamic");
+      svg.setAttribute("viewBox", `0 0 ${widthPx} ${heightPx}`);
+      svg.innerHTML = `
+        <defs>
+          <marker id="shot-arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6 Z" fill="${color}"></path>
+          </marker>
+        </defs>
+        <line class="shot-trail" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+              stroke="${color}" stroke-width="5"
+              stroke-dasharray="${length}" stroke-dashoffset="${length}"
+              marker-end="url(#shot-arrow)"
+              style="animation: drawShotTrail ${duration}ms ease-out forwards;"></line>
+      `;
+      pitch.appendChild(svg);
+    }
+
+    function addTurnoverEffect(event) {
+      const [x, y] = toScreen(event.from);
+      const pulse = document.createElement("div");
+      pulse.className = "turnover-pulse dynamic";
+      pulse.style.left = `${x}px`;
+      pulse.style.top = `${y}px`;
+      pitch.appendChild(pulse);
+
+      const ring = document.createElement("div");
+      ring.className = "turnover-ring dynamic";
+      ring.style.left = `${x}px`;
+      ring.style.top = `${y}px`;
+      pitch.appendChild(ring);
+
+      const banner = document.createElement("div");
+      banner.className = "event-banner turnover-banner dynamic";
+      banner.textContent = event.kind === "intercept" ? "INTERCEPTED!" : "TURNOVER!";
+      pitch.appendChild(banner);
+
+      pitch.classList.add("pitch-flash-turnover");
+      const ball = document.getElementById("ball");
+      if (ball) ball.classList.add("ball-alert");
+    }
+
+    function addGoalEffect(event) {
+      const banner = document.createElement("div");
+      banner.className = "event-banner goal-banner dynamic";
+      banner.textContent = event.team === "Colombia" ? "GOAL COLOMBIA!" : "GOAL RIVAL!";
+      pitch.appendChild(banner);
+      pitch.classList.add("pitch-flash-goal");
+      document.querySelectorAll(".cell.goal").forEach(cell => cell.classList.add("goal-mouth-flash"));
+    }
+
+    function animateBallShot(event) {
+      const ball = ensureBall();
+      const [x1, y1] = toScreen(event.from);
+      const [x2, y2] = toScreen(event.to);
+      const duration = animDurationMs();
+      const offset = cs * 0.22;
+      const size = cs * 0.28;
+
+      ball.style.transition = "none";
+      ball.style.width = `${size}px`;
+      ball.style.height = `${size}px`;
+      ball.style.left = `${x1 + offset}px`;
+      ball.style.top = `${y1 + offset}px`;
+
+      requestAnimationFrame(() => {
+        ball.style.transition = `left ${duration}ms cubic-bezier(.25,.1,.2,1), top ${duration}ms cubic-bezier(.25,.1,.2,1)`;
+        ball.style.left = `${x2 + offset}px`;
+        ball.style.top = `${y2 + offset}px`;
+      });
+    }
+    function ownerIndex(frame, team) {
+      const players = team === "Colombia" ? frame.colombia : frame.rival;
+      return players.findIndex(pos => pos[0] === frame.ball[0] && pos[1] === frame.ball[1]);
+    }
+    function addPlayer(id, pos, number, teamClass, hasBall, moved = false) {
+      const [x, y] = toScreen(pos);
+      let el = document.getElementById(`player-${id}`);
+      if (!el) {
+        el = document.createElement("div");
+        el.id = `player-${id}`;
+        pitch.appendChild(el);
+      }
+      el.className = `player ${teamClass}${hasBall ? " has-ball" : ""}${moved ? " moving" : ""}`;
+      el.textContent = number;
+      el.style.transition = moveTransition;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      el.style.width = `${cs * 0.68}px`;
+      el.style.height = `${cs * 0.68}px`;
+    }
+    function ensureBall() {
+      let ball = document.getElementById("ball");
+      if (!ball) {
+        ball = document.createElement("div");
+        ball.id = "ball";
+        pitch.appendChild(ball);
+      }
+      return ball;
+    }
+    function addBall(pos) {
+      const ball = ensureBall();
+      const [x, y] = toScreen(pos);
+      ball.style.transition = moveTransition;
+      ball.style.left = `${x + cs * 0.22}px`;
+      ball.style.top = `${y + cs * 0.22}px`;
+      ball.style.width = `${cs * 0.28}px`;
+      ball.style.height = `${cs * 0.28}px`;
+    }
+    function stop() {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      play.textContent = "Play";
+    }
+    function scheduleNextFrame() {
+      if (frameIndex >= data.frames.length - 1) {
+        stop();
+        return;
+      }
+      timer = setTimeout(() => {
+        drawFrame(frameIndex + 1);
+        scheduleNextFrame();
+      }, frameDelay(frameIndex));
+    }
+    function start() {
+      if (timer !== null) return;
+      play.textContent = "Pause";
+      scheduleNextFrame();
+    }
+    play.addEventListener("click", () => timer === null ? start() : stop());
+    restart.addEventListener("click", () => { stop(); drawFrame(0); });
+    prev.addEventListener("click", () => { stop(); drawFrame(frameIndex - 1); });
+    next.addEventListener("click", () => { stop(); drawFrame(frameIndex + 1); });
+    gridToggle.addEventListener("change", () => setGridVisible(gridToggle.checked));
+    scrubber.addEventListener("input", event => { stop(); drawFrame(Number(event.target.value)); });
+    window.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft") { stop(); drawFrame(frameIndex - 1); }
+      if (event.key === "ArrowRight") { stop(); drawFrame(frameIndex + 1); }
+      if (event.key === " ") {
+        event.preventDefault();
+        timer === null ? start() : stop();
+      }
+    });
+    drawFrame(0);
+  </script>
+</body>
+
+</html>

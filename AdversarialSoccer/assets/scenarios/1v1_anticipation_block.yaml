@@ -1,0 +1,9 @@
+size: [16, 11]
+max_shot_distance: 6
+max_turns: 14
+colombia:
+  - [4, 6]
+rival:
+  - [6, 5]
+possession: rival
+ball_owner: 0

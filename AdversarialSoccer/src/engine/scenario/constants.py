@@ -1,0 +1,9 @@
+"""Default and validation limits for scenario YAML and field geometry."""
+
+MIN_FIELD_WIDTH = 15
+MIN_FIELD_HEIGHT = 10
+MAX_FIELD_WIDTH = 50
+MAX_FIELD_HEIGHT = 25
+MIN_GOAL_HEIGHT = 3
+DEFAULT_MAX_SHOT_DISTANCE = 8
+DEFAULT_MAX_TURNS = 24
