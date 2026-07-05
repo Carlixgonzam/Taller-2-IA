@@ -138,6 +138,47 @@ def mcts_search(
     ### YOUR CODE HERE ###
     # --- SOLUTION START ---
 
+    #esta es mi version inicial
+    '''
+    acá se me olvidó tener en cuenta que  yo le pasé nodo y nodo expandido pero la funcion espera es el gamestate
+    también mi funcion llamaba _expand en vez de on_expand que sirve para que el agente cuente nodos expandidos
+
+     while iterations != 0:
+        nodo = _select(state, exploration)
+        if is_terminal(nodo.state):
+            valor = _rollout(nodo,evaluation_function,rng,prob)
+        else:
+            nodoexpandido = _expand(nodo,evaluation_function,rng,prob)
+            valor = _rollout(nodoexpandido,evaluation_function,rng,prob)
+    _backpropagate(nodoexpandido,valor)
+
+
+    '''
+
+    # prompts usados con IA para corregir la version inicial:
+    # 1. "explora en su totalidad este proyecto, y lee el Taller 2.pdf, la parte que yo tengo
+    #    que solucionar es esta de uct.py... dame una idea teorica de como funciona el
+    #    algoritmo y luego la solucion mas sencilla posible"
+    # 2. "para intentar implementar search.py... ya tengo una idea de como funciona pero al
+    #    momento de intentar escribir no se me ocurre que hacer" (pidio guia, no codigo)
+    # 3. "mira esta es mi version inicial" (pego el bloque de arriba, se senalaron 5 bugs:
+    #    while infinito, _select recibiendo state en vez de root, nodoexpandido usado fuera
+    #    de su alcance, _rollout recibiendo un nodo en vez de un GameState, on_expand nunca
+    #    invocado)
+
+    while iterations > 0:
+        nodo = _select(root, exploration)
+        if is_terminal(nodo.state):
+            valor = evaluation_function(nodo.state)
+        else:
+            nodoexpandido = _expand(nodo, evaluation_function, rng, prob)
+            if nodoexpandido is not nodo and on_expand is not None:
+                on_expand()
+            valor = _rollout(nodoexpandido.state, evaluation_function, rng, prob)
+            nodo = nodoexpandido
+        _backpropagate(nodo, valor)
+        iterations -= 1
+
     # --- SOLUTION END ---
 
     return _best_root_move(root)

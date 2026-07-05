@@ -20,7 +20,6 @@ def uct_score(
     if visits == 0:
         return float("inf")
 
-    ### YOUR CODE HERE ###
-    # --- SOLUTION START ---
-    
-    # --- SOLUTION END ---
+    explotacion = total_value / visits
+    exploracion = exploration * math.sqrt(math.log(parent_visits) / visits)
+    return explotacion + exploracion
