@@ -43,6 +43,12 @@ def evaluation_function(state: GameState) -> float:
         Scalar utility from Colombia's perspective.
     """
     ### YOUR CODE HERE ###
-    # --- SOLUTION START ---
-    
+    # --- SOLUTION START --- LO HICE PARA EL MINIMAX
+    if state.outcome is MatchOutcome.WIN:
+        return 10000
+
+    if state.outcome is MatchOutcome.LOSS:
+        return -10000
+
+    return 0.0
     # --- SOLUTION END ---
