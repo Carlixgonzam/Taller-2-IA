@@ -45,15 +45,6 @@ def minimax_search(
         ### YOUR CODE HERE ###
         # --- SOLUTION START ---
 
-        if on_expand is not None:
-            on_expand()
-
-        if is_cutoff(state, depth):
-            return None, None, evaluation_function(state)
-
-        colombia_actions = legal_actions(state, Team.COLOMBIA)
-        rival_actions = legal_actions(state, Team.RIVAL)
-
         best_colombia_action = None
         best_rival_action = None
         best_value = float("-inf")

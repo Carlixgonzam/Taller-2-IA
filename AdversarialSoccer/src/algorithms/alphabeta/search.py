@@ -66,10 +66,8 @@ def alphabeta_search(
                     worst_value = value
                     worst_rival_action = rival_action
 
-                # actualz beta (min)
-                beta = min(beta, worst_value)
-
-                # Poda Beta
+                # poda Beta el rival ya encontro algo peor que lo que MAX puede
+                # garantizar en otra rama, no hace falta seguir buscando aqui
                 if worst_value < alpha:
                     break
 
