@@ -1,3 +1,40 @@
+# ==========================
+# VERSIÓN Inicial
+# ==========================
+#
+# best_action = None
+# best_reply = None
+# best_value = float("-inf")
+#
+# for colombia_action in colombia_actions:
+#
+#     worst_value = float("inf")
+#     worst_reply = None
+#     total = 0
+#
+#     for rival_action in rival_actions:
+#
+#         successor = step(state, colombia_action, rival_action)
+#         value = ply(successor, depth - 1)[2]
+#
+#         total += value
+#
+#         if value < worst_value:
+#             worst_value = value
+#             worst_reply = rival_action
+#
+#     expected = (1 - prob) * worst_value + prob * total
+#
+#     if expected > best_value:
+#         best_value = expected
+#         best_action = colombia_action
+#         best_reply = worst_reply
+#
+# return best_action, best_reply, best_value
+#Implementé Expectimax, pero creo que el cálculo del valor esperado está mal.
+#Quiero mantener la estructura general del algoritmo.
+#¿Puedes revisar únicamente la parte donde calculo el nodo de expectativa y decirme qué errores hay? No cambies el resto del código si no es necesario.
+
 from __future__ import annotations
 
 import random
@@ -19,21 +56,12 @@ def expectimax_search(
     prob: float = 0.0,
     on_expand: Callable[[], None] | None = None,
 ) -> tuple[TeamAction, TeamAction, float]:
-    """
-    Depth-limited expectimax from the root: Colombia MAX, mixed rival, and expected value.
 
-    The rival is a chance node: with probability prob it acts uniformly at random;
-    otherwise it plays the greedy MIN reply. The root returns Colombia's action and the
-    greedy rival reply used to break ties at the root.
+    def ply(
+        state: GameState,
+        depth: int,
+    ) -> tuple[TeamAction | None, TeamAction | None, float]:
 
-    Tips:
-    - Same ply shell as minimax_search; the rival layer becomes an expectation.
-    - For each Colombia action, score every rival reply with ply(successor, depth - 1)[2].
-    - expected = (1 - prob) * min(scores) + prob * mean(scores).
-    - Colombia still picks max over expected values.
-    """
-
-    def ply(state: GameState, depth: int) -> tuple[TeamAction | None, TeamAction | None, float]:
         if on_expand is not None:
             on_expand()
 
@@ -43,9 +71,36 @@ def expectimax_search(
         colombia_actions = legal_actions(state, Team.COLOMBIA)
         rival_actions = legal_actions(state, Team.RIVAL)
 
-        ### YOUR CODE HERE ###
-        # --- SOLUTION START ---
-        
-        # --- SOLUTION END ---
+        mejor_accion = None
+        mejor_respuesta = None
+        mejor_valor = float("-inf")
+
+        for colombia_action in colombia_actions:
+
+            suma = 0.0
+            peor_valor = float("inf")
+            peor_respuesta = None
+
+            for rival_action in rival_actions:
+
+                sucesor = step(state, colombia_action, rival_action)
+                valor = ply(sucesor, depth - 1)[2]
+
+                suma += valor
+
+                if valor < peor_valor:
+                    peor_valor = valor
+                    peor_respuesta = rival_action
+
+            promedio = suma / len(rival_actions)
+
+            esperado = (1 - prob) * peor_valor + prob * promedio
+
+            if esperado > mejor_valor:
+                mejor_valor = esperado
+                mejor_accion = colombia_action
+                mejor_respuesta = peor_respuesta
+
+        return mejor_accion, mejor_respuesta, mejor_valor
 
     return finish_search_root(*ply(state, depth))
