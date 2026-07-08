@@ -88,3 +88,49 @@ def alphabeta_search(
         # --- SOLUTION END ---
 
     return finish_search_root(*ply(state, depth, float("-inf"), float("inf")))
+
+"""
+versión inicial:
+best_colombia_action = None
+        best_rival_action = None
+        best_value = float("-inf")
+
+        for colombia_action in colombia_actions:
+
+            worst_rival_action = None
+            worst_value = float("inf")
+
+            for rival_action in rival_actions:
+
+                successor = step(state, colombia_action, rival_action)
+
+                value = ply(successor, depth - 1, alpha, beta)[2]
+
+                if value < worst_value:
+                    worst_value = value
+                    worst_rival_action = rival_action
+
+                # poda Beta el rival ya encontro algo peor que lo que MAX puede
+                # garantizar en otra rama, no hace falta seguir buscando aqui
+                if worst_value <= alpha:
+                    break
+
+            if worst_value > best_value:
+                best_value = worst_value
+                best_colombia_action = colombia_action
+                best_rival_action = worst_rival_action
+
+            # acutaliz alpha (max))
+            alpha = max(alpha, best_value)
+
+            # poda Alpha
+            if best_value >= beta:
+                break
+
+        return best_colombia_action, best_rival_action, best_value
+        
+        Prompt: Por favor revisa si esto está bien, que se actualice perfectamente alpha y beta.
+        Dime si tengo algo mal
+        
+        Output: Tenía mal unos signos >= y <= , me mandó el código que dejé fuera del comentario, que es practicamente igual pero corrigiendo eso
+"""
